@@ -64,7 +64,7 @@
       const name = snapshot.val();
       nameDisplay.textContent = (name || "Имя пока не задано") + " 💵";
 
-      if (soundEnabled && name && name !== lastName) {
+      if (name !== lastName) {
         music.currentTime = 0;
         music.play().catch(err => console.log("Не удалось воспроизвести:", err));
       }
