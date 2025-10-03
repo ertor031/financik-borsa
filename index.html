@@ -33,6 +33,9 @@
   <audio id="music" src="fireworks.mp3" preload="auto"></audio>
   <button id="enable-sound">Включить звук 🔊</button>
 
+  <!-- 🎆 Канвас для фейерверков -->
+  <canvas id="fireworks"></canvas>
+
   <script>
     // ----------------- Firebase -----------------
     const firebaseConf = {
@@ -55,8 +58,8 @@
     // Кнопка активации звука
     document.getElementById("enable-sound").addEventListener("click", () => {
       soundEnabled = true;
-      document.getElementById("enable-sound").style.display = "none"; // скрыть кнопку
-      music.play().catch(()=>{}); // один запуск, чтобы браузер разрешил
+      document.getElementById("enable-sound").style.display = "none"; 
+      music.play().catch(()=>{}); 
       music.pause();
     });
 
@@ -64,9 +67,10 @@
       const name = snapshot.val();
       nameDisplay.textContent = (name || "Имя пока не задано") + " 💵";
 
-      if (name !== lastName) {
+      if (name !== lastName && name !== null) {
         music.currentTime = 0;
         music.play().catch(err => console.log("Не удалось воспроизвести:", err));
+        launchFireworks(); // 🎆 Запускаем фейерверк
       }
       lastName = name;
     });
@@ -82,6 +86,70 @@
     }
     setInterval(updateClock, 1000);
     updateClock();
+
+    // ----------------- Фейерверки -----------------
+    const canvas = document.getElementById("fireworks");
+  const ctx = canvas.getContext("2d");
+  let particles = [];
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
+
+  function random(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+
+  function createFirework(x, y) {
+    const count = 100; // 💥 Больше частиц
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2;
+      const speed = random(2, 7);
+      particles.push({
+        x, y,
+        dx: Math.cos(angle) * speed,
+        dy: Math.sin(angle) * speed,
+        life: 120,
+        color: `hsl(${random(0,360)},100%,50%)`
+      });
+    }
+  }
+
+  function updateParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach((p, i) => {
+      p.x += p.dx;
+      p.y += p.dy;
+      p.dy += 0.05; // гравитация
+      p.life--;
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x, p.y, 3, 3);
+      if (p.life <= 0) particles.splice(i, 1);
+    });
+    requestAnimationFrame(updateParticles);
+  }
+  updateParticles();
+
+  // 🎆 Запуск серии фейерверков на 5 секунд
+  function launchFireworks() {
+    const duration = 5000; // 5 секунд
+    const interval = 300;  // каждые 0.3 секунды новый фейерверк
+    const start = Date.now();
+
+    function spawn() {
+      const x = random(canvas.width * 0.1, canvas.width * 0.9);
+      const y = random(canvas.height * 0.1, canvas.height * 0.5);
+      createFirework(x, y);
+
+      if (Date.now() - start < duration) {
+        setTimeout(spawn, interval);
+      }
+    }
+    spawn();
+  }
   </script>
 
   <script>
